@@ -11,6 +11,7 @@ import {
   railSummary,
   type RouteMap,
 } from "./payments.js";
+import { ROUTE_SCHEMAS } from "./schemas.js";
 import {
   QueueError,
   callNext,
@@ -38,20 +39,8 @@ const routes: RouteMap = {
     price: PRICES.join,
     description:
       "Join a live waitlist with a refundable hold. Returns a signed queue-position token, your position and ETA, and a signed refund claim that auto-matures if you are never served",
-    outputSchema: {
-      type: "object",
-      properties: {
-        ticketId: { type: "string" },
-        token: { type: "string", description: "signed queue-position token" },
-        position: { type: "integer" },
-        ahead: { type: "integer" },
-        eta: { type: "object" },
-        refundClaim: { type: "object" },
-        positionUrl: { type: "string" },
-        holdPolicy: { type: "object" },
-        signature: { type: "string" },
-      },
-    },
+    // Request/response schemas mirror openapi.json — see src/schemas.ts.
+    ...ROUTE_SCHEMAS["POST /join"],
   },
 };
 

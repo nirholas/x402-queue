@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Join the waitlist, agent-first">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0b0d"/>
+      <stop offset="1" stop-color="#141b2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="80" y="80" width="96" height="96" rx="22" fill="#0052ff"/>
+  <text x="128" y="147" text-anchor="middle" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="54" font-weight="700" fill="#ffffff">Q</text>
+  <text x="200" y="146" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="34" font-weight="600" fill="#9aa0ab">x402-queue</text>
+  <text x="80" y="320" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#f2f4f7">Join the waitlist, agent-first</text>
+  <text x="80" y="392" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="36" font-weight="400" fill="#9aa0ab">Pay-per-call virtual queueing over x402</text>
+  <rect x="80" y="500" width="1040" height="1" fill="#262931"/>
+  <text x="80" y="560" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="28" fill="#0052ff">HTTP 402 · USDC on Base or Solana · pay-per-call</text>
+</svg>

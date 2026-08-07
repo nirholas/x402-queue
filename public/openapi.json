@@ -35,7 +35,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/queues/{queueId}": {
@@ -66,7 +67,8 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "security": []
       }
     },
     "/join": {
@@ -172,7 +174,8 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "security": []
       }
     },
     "/claim/{token}": {
@@ -209,7 +212,8 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "security": []
       }
     },
     "/leave/{token}": {
@@ -246,7 +250,8 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "security": []
       }
     },
     "/call-next/{queueId}": {
@@ -280,7 +285,8 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "security": []
       }
     },
     "/serve/{ticketId}": {
@@ -314,7 +320,8 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "security": []
       }
     },
     "/no-show/{ticketId}": {
@@ -349,7 +356,8 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "security": []
       }
     },
     "/info": {
@@ -367,7 +375,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health": {
@@ -385,7 +394,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/.well-known/x402": {
@@ -403,7 +413,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     }
   },
