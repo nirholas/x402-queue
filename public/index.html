@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>402 Walk-ins — Join the list</title>
+<script>
+  // Drop-in checkout modal (proprietary npm package, loaded from CDN — never vendored).
+  // `checkout-origin` points the Solana rail at THIS server's /api/x402-checkout,
+  // which builds the SPL transfer Phantom signs. The Base rail needs no server.
+  const x402Modal = document.createElement("script");
+  x402Modal.type = "module";
+  x402Modal.src = "https://unpkg.com/@three-ws/x402-payment-modal";
+  x402Modal.dataset.x402CheckoutOrigin = location.origin;
+  x402Modal.dataset.x402BrandName = "402 Walk-ins";
+  x402Modal.dataset.x402FooterNote = "x402 · USDC on Base or Solana";
+  document.head.appendChild(x402Modal);
+</script>
+<style>
+  :root {
+    --accent: #0052ff;
+    --bg: #ffffff; --fg: #0a0b0d; --muted: #5b616e;
+    --card: #f6f7f9; --line: #e5e7eb; --ok: #098551; --warn: #b45309;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0a0b0d; --fg: #f2f4f7; --muted: #9aa0ab; --card: #16181d; --line: #262931; --ok: #27c48a; --warn: #f0b429; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  header h1 { font-size: 1.9rem; letter-spacing: -0.02em; }
+  header p.tag { color: var(--muted); margin-top: 4px; }
+  .badge {
+    display: inline-block; font-size: .75rem; font-weight: 600; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 999px; padding: 2px 10px; margin-bottom: 12px;
+  }
+  section { margin-top: 32px; }
+  h2 { font-size: 1.1rem; margin-bottom: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select {
+    background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 9px 10px; font-size: .95rem; min-width: 0;
+  }
+  .field { flex: 1 1 140px; }
+  .field input, .field select { width: 100%; }
+  button.pay {
+    background: var(--accent); color: #fff; border: 0; border-radius: 10px;
+    padding: 12px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%;
+  }
+  button.pay:hover { filter: brightness(1.1); }
+  button.pay:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost {
+    background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 10px; padding: 10px 16px; font-weight: 600; cursor: pointer;
+  }
+  .price { color: var(--muted); font-size: .85rem; text-align: center; margin-top: 8px; }
+  .q {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+    margin-bottom: 8px; cursor: pointer; background: var(--bg);
+  }
+  .q:hover, .q.sel { border-color: var(--accent); }
+  .q.sel { box-shadow: inset 0 0 0 1px var(--accent); }
+  .q .name { font-weight: 600; font-size: .95rem; }
+  .q .meta { color: var(--muted); font-size: .82rem; }
+  .wait { text-align: right; white-space: nowrap; }
+  .wait .n { font-size: 1.35rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .wait .u { color: var(--muted); font-size: .74rem; }
+  .ticket { border-left: 4px solid var(--ok); }
+  .posnum { font-size: 3.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--accent); line-height: 1; }
+  .status { display: inline-block; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; }
+  .status.waiting { color: var(--accent); }
+  .status.called { color: var(--warn); }
+  .status.served, .status.refunded, .status.left { color: var(--ok); }
+  .status.no-show { color: var(--muted); }
+  pre {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px; overflow-x: auto; font-size: .8rem; margin-top: 12px;
+  }
+  .hint { color: var(--muted); font-size: .85rem; margin-top: 10px; }
+  .hidden { display: none; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge">x402 demo — pay in USDC on Base <em>or</em> Solana</span>
+    <h1 id="venueName">Join the list</h1>
+    <p class="tag">Seeing the wait is free. $0.01 holds your place and hands back a signed position token plus a refund claim that matures on its own if we never get to you. Checking your position after that is free, forever. Connect Phantom (Solana) or MetaMask (Base); the modal reads the 402 and picks the rail. Agents use the <a href="/.well-known/x402">x402 manifest</a>; humans use this page.</p>
+  </header>
+
+  <section>
+    <h2>1 · Pick a queue <span style="color:var(--muted);font-weight:400">(free — the board costs nothing)</span></h2>
+    <div class="card">
+      <div id="queues"></div>
+      <div class="hint" id="policyLine"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · Hold your place <span style="color:var(--muted);font-weight:400">($0.01 refundable)</span></h2>
+    <div class="card">
+      <div class="row">
+        <div class="field"><label for="name">Your name</label><input id="name" placeholder="Ada Lovelace"></div>
+        <div class="field"><label for="party">Party size</label>
+          <select id="party"><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="contact">Contact (optional — only shown when you're called)</label><input id="contact" placeholder="+1 555 402 0402"></div>
+      </div>
+      <button class="pay" id="joinBtn" disabled
+        data-x402-endpoint="/join" data-x402-method="POST"
+        data-x402-merchant="402 Walk-ins" data-x402-action="Join the queue">
+        Pay $0.01 &amp; join
+      </button>
+      <div class="price">Refunded when you're served, when you leave, or if we miss your ETA</div>
+    </div>
+  </section>
+
+  <section id="result" class="hidden">
+    <h2>Your place in line</h2>
+    <div class="card ticket">
+      <div class="hint" style="margin:0" id="posLabel">Position</div>
+      <div class="posnum" id="posNum">—</div>
+      <div style="margin-top:8px"><span class="status waiting" id="statusPill">waiting</span></div>
+      <div id="ticketSummary" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="ghost" id="refreshBtn">Refresh position (free)</button>
+        <button class="ghost" id="claimBtn">Claim refund</button>
+        <button class="ghost" id="leaveBtn">Leave the queue</button>
+      </div>
+      <pre id="artifact"></pre>
+    </div>
+  </section>
+
+  <footer class="hint" style="margin-top:40px">
+    Powered by <a href="https://x402.org">x402</a> — dual-rail USDC (Base + Solana). Payment UI by
+    <code>@three-ws/x402-payment-modal</code> (SIWX wallet re-entry, per-site spending caps).
+    Source: <a href="https://github.com/nirholas/x402-queue">github.com/nirholas/x402-queue</a>
+  </footer>
+</div>
+
+<script>
+  let chosen = null;      // queue id
+  let ticket = null;      // the POST /join artifact
+  let poll = null;
+  let lastPayment = null; // { network, transaction, payer } from the settled payment
+
+  const $ = (id) => document.getElementById(id);
+
+  async function loadQueues() {
+    const data = await fetch("/queues").then((r) => r.json());
+    $("venueName").textContent = data.venue.name;
+    $("policyLine").textContent = data.holdPolicy.description;
+    const box = $("queues");
+    box.innerHTML = "";
+    for (const q of data.queues) {
+      const el = document.createElement("div");
+      el.className = "q" + (q.id === chosen ? " sel" : "");
+      el.innerHTML =
+        `<div><div class="name">${q.name}</div>` +
+        `<div class="meta">${q.description}</div>` +
+        `<div class="meta">${q.waiting} waiting · ${q.beingServed} being served · ${q.spaceLeft} spaces left</div></div>` +
+        `<div class="wait"><div class="n">${q.estimatedWaitMinutes}</div><div class="u">min wait</div></div>`;
+      if (q.acceptingJoins) {
+        el.onclick = () => {
+          chosen = q.id;
+          document.querySelectorAll(".q").forEach((x) => x.classList.remove("sel"));
+          el.classList.add("sel");
+          $("joinBtn").disabled = false;
+          syncBody();
+        };
+      } else {
+        el.style.opacity = ".5";
+        el.style.cursor = "not-allowed";
+      }
+      box.appendChild(el);
+    }
+  }
+
+  function syncBody() {
+    $("joinBtn").setAttribute("data-x402-body", JSON.stringify({
+      queue: chosen,
+      name: $("name").value || "Walk-in (demo)",
+      party: Number($("party").value),
+      contact: $("contact").value || undefined,
+    }));
+  }
+  ["name", "party", "contact"].forEach((id) => $(id).addEventListener("input", syncBody));
+  $("party").addEventListener("change", syncBody);
+  loadQueues();
+
+  // `x402:result` bubbles from the clicked button with detail = PayResult:
+  // { ok, result, payment: { network, transaction, payer }, response }.
+  addEventListener("x402:result", (e) => {
+    const artifact = e.detail?.result ?? e.detail;
+    if (!artifact?.token) return;
+    lastPayment = e.detail?.payment ?? null;
+    ticket = artifact;
+    $("result").classList.remove("hidden");
+    $("artifact").textContent = JSON.stringify(artifact, null, 2);
+    $("result").scrollIntoView({ behavior: "smooth" });
+    refresh();
+    // Position checks are free, so poll them.
+    clearInterval(poll);
+    poll = setInterval(refresh, 15000);
+    loadQueues();
+  });
+
+  addEventListener("x402:error", (e) => {
+    if (e.detail?.error?.code === "cancelled") return;
+    console.error("x402 payment failed:", e.detail?.error);
+  });
+
+  async function refresh() {
+    if (!ticket) return;
+    const p = await fetch(`/position/${ticket.token}`).then((r) => r.json());
+    if (p.error) return;
+    $("posNum").textContent = p.position ?? "—";
+    $("posLabel").textContent = p.position ? `Position in ${p.queue.name}` : p.queue.name;
+    $("statusPill").textContent = p.status;
+    $("statusPill").className = "status " + p.status;
+    $("ticketSummary").innerHTML =
+      (p.eta ? `<strong>~${p.eta.minutes} min</strong> · ${p.ahead} ahead of you<div class="hint" style="margin:2px 0">Quoted at join: ${new Date(p.eta.quotedAtJoin).toLocaleTimeString()}</div>` : "") +
+      (p.calledAt ? `<div class="hint" style="margin:2px 0">Called at ${new Date(p.calledAt).toLocaleTimeString()} — you have ${ticket.graceMinutes} minutes</div>` : "") +
+      `<div class="hint" style="margin:2px 0">Hold ${p.refund.amount}: ${p.refund.issued ? "refunded" : p.refund.due ? "claimable now" : p.refund.reason}</div>` +
+      (lastPayment
+        ? `<div class="hint" style="margin:2px 0">Paid on <strong>${lastPayment.network}</strong>` +
+          (lastPayment.transaction ? ` · tx <code>${String(lastPayment.transaction).slice(0, 18)}…</code>` : "") + `</div>`
+        : "");
+    $("claimBtn").disabled = !p.refund.due && !p.refund.issued;
+    $("artifact").textContent = JSON.stringify(p, null, 2);
+    if (["served", "no-show", "left", "refunded"].includes(p.status)) clearInterval(poll);
+  }
+
+  $("refreshBtn").onclick = refresh;
+
+  $("claimBtn").onclick = async () => {
+    if (!ticket) return;
+    const res = await fetch(`/claim/${ticket.token}`, { method: "POST" });
+    $("artifact").textContent = JSON.stringify(await res.json(), null, 2);
+    refresh();
+  };
+
+  $("leaveBtn").onclick = async () => {
+    if (!ticket) return;
+    const res = await fetch(`/leave/${ticket.token}`, { method: "POST" });
+    $("artifact").textContent = JSON.stringify(await res.json(), null, 2);
+    clearInterval(poll);
+    refresh();
+    loadQueues();
+  };
+</script>
+</body>
+</html>

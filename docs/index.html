@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>x402-queue — pay to hold a place in line, auto-refund if never served</title>
+<meta name="description" content="Live waitlist server — agents and humans join a queue with a refundable x402 hold and receive a signed position token plus a refund claim that matures on its own.">
+<style>
+  :root {
+    --accent: #0052ff; --bg: #ffffff; --fg: #0a0b0d; --muted: #5b616e;
+    --card: #f6f7f9; --line: #e5e7eb; --code: #0f1115; --codefg: #e6e8ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0a0b0d; --fg: #f2f4f7; --muted: #9aa0ab; --card: #14161b; --line: #262931; --code: #101216; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px 96px; }
+  nav { display: flex; gap: 18px; align-items: center; padding: 20px 0; flex-wrap: wrap; }
+  nav .logo { font-weight: 700; letter-spacing: -0.02em; }
+  nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+  nav a:hover { color: var(--accent); }
+  .hero { padding: 56px 0 40px; }
+  .hero .pill { display: inline-block; font-size: .78rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 3px 12px; margin-bottom: 18px; }
+  h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.03em; line-height: 1.12; }
+  h1 .a { color: var(--accent); }
+  .hero p.sub { color: var(--muted); font-size: 1.15rem; margin: 18px 0 26px; max-width: 640px; }
+  .install { background: var(--code); color: var(--codefg); border-radius: 10px; padding: 14px 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9rem; overflow-x: auto; white-space: pre; }
+  .ctas { margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-block; text-decoration: none; border-radius: 10px; padding: 11px 20px; font-weight: 600; font-size: .95rem; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.ghost { color: var(--accent); border: 1px solid var(--accent); }
+  h2 { font-size: 1.45rem; letter-spacing: -0.02em; margin: 56px 0 18px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; min-width: 520px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+  td code, li code, p code { background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: .85em; }
+  .price-tag { color: var(--accent); font-weight: 700; white-space: nowrap; }
+  pre.block { background: var(--code); color: var(--codefg); border-radius: 12px; padding: 18px; overflow-x: auto; font-size: .84rem; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 20px 0; overflow-x: auto; }
+  .step { flex: 1; min-width: 170px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .step b { display: block; color: var(--accent); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .step p { font-size: .87rem; color: var(--muted); }
+  .arrow { align-self: center; padding: 0 8px; color: var(--muted); font-size: 1.3rem; }
+  .rails { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 8px; }
+  .rail { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .rail h3 { font-size: .95rem; margin-bottom: 8px; }
+  .rail dl { font-size: .84rem; color: var(--muted); }
+  .rail dt { font-weight: 600; color: var(--fg); margin-top: 8px; }
+  .rail dd { margin: 0; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .tile h3 { font-size: 1rem; margin-bottom: 6px; }
+  .tile p { color: var(--muted); font-size: .88rem; }
+  .tile a { color: var(--accent); text-decoration: none; font-size: .88rem; }
+  footer { margin-top: 72px; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 24px; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="logo">x402-queue</span>
+    <a href="https://github.com/nirholas/x402-queue">GitHub</a>
+    <a href="tutorial.md">Tutorial</a>
+    <a href="api.md">API reference</a>
+    <a href="agents.md">For agents</a>
+    <a href="https://github.com/nirholas/x402-queue/blob/main/skill.md">skill.md</a>
+    <a href="https://github.com/nirholas/x402-queue/blob/main/public/.well-known/x402">.well-known/x402</a>
+  </nav>
+
+  <div class="hero">
+    <span class="pill">x402 Suite · USDC on Base <em>or</em> Solana</span>
+    <h1>Hold your place. <span class="a">Keep the claim.</span></h1>
+    <p class="sub">A self-hosted live waitlist for walk-in lists, counters and service desks. Seeing the wait is free; $0.01 holds your place and hands back a <em>signed position token</em> and a <em>signed refund claim</em> that matures automatically if you are never served. Checking your position afterwards is free, forever. <strong>Pay in USDC on Base or Solana — your client picks the rail.</strong></p>
+    <div class="install">git clone https://github.com/nirholas/x402-queue
+cd x402-queue &amp;&amp; npm install
+npm run dev   # runs out of the box, both rails live</div>
+    <div class="ctas">
+      <a class="btn primary" href="https://github.com/nirholas/x402-queue">View on GitHub</a>
+      <a class="btn ghost" href="tutorial.md">Read the tutorial</a>
+      <a class="btn ghost" href="https://github.com/nirholas/x402-queue/blob/main/public/index.html">Live checkout demo</a>
+    </div>
+  </div>
+
+  <h2>Pricing</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Route</th><th>Price</th><th>The artifact you get back</th></tr>
+    <tr><td><code>GET /queues</code></td><td class="price-tag">free</td><td>Every queue with its live length, estimated wait, capacity and whether it is accepting joins</td></tr>
+    <tr><td><code>GET /queues/:id</code></td><td class="price-tag">free</td><td>Live board for one queue — everyone in order, anonymised to an initial</td></tr>
+    <tr><td><code>POST /join</code></td><td class="price-tag">$0.01 <span style="font-weight:400;color:var(--muted)">(refundable)</span></td><td><code>{ticketId, token, position, ahead, eta, refundClaim, positionUrl, signature}</code></td></tr>
+    <tr><td><code>GET /position/:token</code></td><td class="price-tag">free</td><td>Live position, ETA, serve status and refund status. Pollable — you paid for the place, not the look</td></tr>
+    <tr><td><code>POST /claim/:token</code></td><td class="price-tag">free</td><td>Signed refund record. Idempotent, authenticated by the token itself</td></tr>
+    <tr><td><code>POST /leave/:token</code></td><td class="price-tag">free</td><td>Give up your place; the hold is returned and the queue closes up behind you</td></tr>
+  </table>
+  </div>
+  <p style="color:var(--muted);font-size:.9rem;margin-top:12px">Every paid route returns the thing you bought <em>in the 200 body</em>. No pay-now-deliver-later.</p>
+
+  <h2>How a paid call works</h2>
+  <div class="flow">
+    <div class="step"><b>1 · Request</b><p><code>POST /join</code> with no payment. Server replies <strong>402</strong> with an <code>accepts[]</code> holding <em>both</em> rails — amount, token address and recipient on Base <em>and</em> on Solana.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>2 · Pay (your pick)</b><p>Base: sign an EIP-3009 USDC authorization. Solana: sign an SPL <code>transferChecked</code>. Retry with the <code>X-PAYMENT</code> header; that rail's facilitator verifies and settles on the chain you chose.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>3 · Artifact</b><p><strong>200</strong> with the signed token and refund claim in the body and a settlement receipt in <code>X-PAYMENT-RESPONSE</code>, naming the rail. Settlement only runs on success.</p></div>
+  </div>
+
+  <h2>Two rails, one price</h2>
+  <div class="rails">
+    <div class="rail">
+      <h3>USDC on Base (EVM)</h3>
+      <dl>
+        <dt>network</dt><dd>base-sepolia (default) · base</dd>
+        <dt>asset</dt><dd>0x036CbD53842c5426634e7929541eC2318f3dCF7e</dd>
+        <dt>payTo</dt><dd>0x40252CFDF8B20Ed757D61ff157719F33Ec332402</dd>
+        <dt>signature</dt><dd>EIP-3009 transferWithAuthorization</dd>
+        <dt>facilitator</dt><dd>https://x402.org/facilitator</dd>
+      </dl>
+    </div>
+    <div class="rail">
+      <h3>USDC on Solana (SVM)</h3>
+      <dl>
+        <dt>network</dt><dd>solana (default) · solana-devnet</dd>
+        <dt>asset</dt><dd>EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v</dd>
+        <dt>payTo</dt><dd>WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW</dd>
+        <dt>signature</dt><dd>SPL transferChecked (serialized tx)</dd>
+        <dt>facilitator</dt><dd>https://facilitator.payai.network</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h2>Quickstart — agent side</h2>
+  <pre class="block">import { wrapFetchWithPayment } from "x402-fetch";
+import { privateKeyToAccount } from "viem/accounts";
+
+const payFetch = wrapFetchWithPayment(fetch, privateKeyToAccount(PRIVATE_KEY));
+
+// seeing the wait is free — no wallet needed
+const { queues } = await fetch("http://localhost:4025/queues").then(r =&gt; r.json());
+const q = queues.find(x =&gt; x.acceptingJoins &amp;&amp; x.estimatedWaitMinutes &lt; 30);
+
+// $0.01: hold the place, get the token + refund claim back immediately
+const ticket = await payFetch("http://localhost:4025/join", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ queue: q.id, name: "Agent Ada", party: 2 }),
+}).then(r =&gt; r.json());
+
+console.log(ticket.position, ticket.eta.minutes, ticket.refundClaim.claimableAfter);
+
+// checking is free — poll it as often as you like
+const pos = await fetch(ticket.positionUrl).then(r =&gt; r.json());
+console.log(pos.status, pos.position, pos.refund.due);</pre>
+
+  <h2>Explore</h2>
+  <div class="grid">
+    <div class="tile"><h3>Human checkout demo</h3><p>Live-board flow with the drop-in payment modal — watch the wait for free, join with Phantom (Solana) or MetaMask (Base), and the position ticks down on screen.</p><a href="https://github.com/nirholas/x402-queue/blob/main/public/index.html">public/index.html →</a></div>
+    <div class="tile"><h3>For AI agents</h3><p>skill.md + .well-known/x402 discovery, MCP tool wrapper for Claude, listing on x402scan / Bazaar.</p><a href="agents.md">agents.md →</a></div>
+    <div class="tile"><h3>API reference</h3><p>Every endpoint with params, prices, schemas, and error cases. OpenAPI 3.1 included.</p><a href="api.md">api.md →</a></div>
+    <div class="tile"><h3>Raw wire flow</h3><p>The exact 402 → pay → 200 exchange in curl, header by header.</p><a href="https://github.com/nirholas/x402-queue/blob/main/examples/curl.md">examples/curl.md →</a></div>
+  </div>
+
+  <footer>
+    Apache-2.0 · Part of the <a href="https://github.com/nirholas/x402-suite">x402 Suite</a> · Payments via <a href="https://x402.org">x402</a> — USDC on Base + Solana · Built by <a href="https://github.com/nirholas">nirholas</a> · <a href="mailto:nichxbt@gmail.com">nichxbt@gmail.com</a>
+  </footer>
+</div>
+</body>
+</html>

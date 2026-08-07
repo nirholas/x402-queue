@@ -1,0 +1,46 @@
+{
+  "venue": {
+    "name": "402 Walk-ins",
+    "description": "Demo venue — edit config/queues.json to describe your real waitlists.",
+    "timezone": "America/New_York",
+    "address": "402 Payment Ave, New York, NY 10001",
+    "phone": "+1 (555) 402-0402"
+  },
+  "queues": [
+    {
+      "id": "dining-room",
+      "name": "Dining room walk-in list",
+      "description": "Tables for parties of 1–6. Be within five minutes of the door when you are called.",
+      "avgServeMinutes": 12,
+      "parallelServers": 2,
+      "maxLength": 40,
+      "graceMinutes": 5,
+      "open": true
+    },
+    {
+      "id": "bar-counter",
+      "name": "Chef's counter",
+      "description": "Eight seats at the pass. Single seats move fastest.",
+      "avgServeMinutes": 25,
+      "parallelServers": 1,
+      "maxLength": 20,
+      "graceMinutes": 5,
+      "open": true
+    },
+    {
+      "id": "service-desk",
+      "name": "Service desk",
+      "description": "Repairs, returns and account questions.",
+      "avgServeMinutes": 8,
+      "parallelServers": 3,
+      "maxLength": 60,
+      "graceMinutes": 3,
+      "open": true
+    }
+  ],
+  "holdPolicy": {
+    "joinPrice": "$0.01",
+    "refundIfNotServedMinutes": 30,
+    "description": "The $0.01 x402 hold keeps the list honest — it is refunded when you are served, and it is refunded automatically if we fail to serve you within 30 minutes of your quoted ETA. Leaving the queue before being called refunds the hold. Not showing up when called forfeits it."
+  }
+}

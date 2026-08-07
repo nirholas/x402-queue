@@ -1,0 +1,198 @@
+{
+  "x402Version": 1,
+  "name": "x402-queue",
+  "description": "Live waitlist server — pay to join a queue, receive a signed position token, auto-refund if never served",
+  "resources": [
+    {
+      "resource": "POST /join",
+      "description": "Join a live waitlist with a $0.01 refundable hold. Body: {queue, name, party?, contact?} — read GET /queues (free) for valid queue ids and current waits. Returns a signed queue-position token, the position and ETA at issue time, and a signed refund claim that matures automatically if the venue never serves you — all in the 200 response. Checking your position afterwards is free and unlimited.",
+      "price": "$0.01",
+      "network": "base-sepolia",
+      "asset": "USDC",
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "base64url(payload).hexHMAC — proves when you joined and what ETA you were quoted"
+          },
+          "position": {
+            "type": "number"
+          },
+          "ahead": {
+            "type": "number"
+          },
+          "party": {
+            "type": "number"
+          },
+          "holder": {
+            "type": "string"
+          },
+          "queue": {
+            "type": "object"
+          },
+          "venue": {
+            "type": "string"
+          },
+          "eta": {
+            "type": "object",
+            "properties": {
+              "minutes": {
+                "type": "number"
+              },
+              "at": {
+                "type": "string"
+              },
+              "basis": {
+                "type": "string"
+              }
+            }
+          },
+          "graceMinutes": {
+            "type": "number"
+          },
+          "holdPolicy": {
+            "type": "object"
+          },
+          "refundClaim": {
+            "type": "object",
+            "description": "A signed instrument, in hand at join time — not a promise of one",
+            "properties": {
+              "claimId": {
+                "type": "string"
+              },
+              "ticketId": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "claimableAfter": {
+                "type": "string"
+              },
+              "claimEndpoint": {
+                "type": "string"
+              },
+              "signature": {
+                "type": "string"
+              }
+            }
+          },
+          "positionUrl": {
+            "type": "string"
+          },
+          "positionEndpoint": {
+            "type": "string"
+          },
+          "leaveEndpoint": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string",
+            "description": "HMAC-SHA256 over canonical JSON"
+          }
+        }
+      },
+      "networks": [
+        "base-sepolia",
+        "solana"
+      ],
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "base-sepolia",
+          "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+          "assetSymbol": "USDC",
+          "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402",
+          "maxAmountRequired": "10000",
+          "mimeType": "application/json"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
+          "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW",
+          "maxAmountRequired": "10000",
+          "mimeType": "application/json"
+        }
+      ]
+    }
+  ],
+  "freeResources": [
+    {
+      "resource": "GET /queues",
+      "description": "Every queue with its live length, estimated wait, capacity and whether it is accepting joins. Free by design — seeing the wait costs nothing, holding a place is what you pay for."
+    },
+    {
+      "resource": "GET /queues/:queueId",
+      "description": "Live board for one queue: everyone in order, anonymised to an initial, with status and join time"
+    },
+    {
+      "resource": "GET /position/:token",
+      "description": "Live position, ETA, serve status and refund status for one ticket. Free and pollable — you paid once for the place in line, not for the right to look at it."
+    },
+    {
+      "resource": "POST /claim/:token",
+      "description": "Exercise the refund claim. Idempotent, authenticated by the token itself. Due when served, when you left before being called, or when the quoted ETA was missed by more than the policy window."
+    },
+    {
+      "resource": "POST /leave/:token",
+      "description": "Give up your place; the hold is returned and the queue closes up behind you"
+    },
+    {
+      "resource": "POST /call-next/:queueId",
+      "description": "Operator: call the next waiting party. Returns their name, party size, contact and grace window."
+    },
+    {
+      "resource": "POST /serve/:ticketId",
+      "description": "Operator: mark a called party served; the hold is returned"
+    },
+    {
+      "resource": "POST /no-show/:ticketId",
+      "description": "Operator: called but never appeared; the hold is forfeited. Refused until the full grace period has elapsed."
+    },
+    {
+      "resource": "GET /info",
+      "description": "Venue profile, hold policy, prices, payment rails"
+    },
+    {
+      "resource": "GET /health",
+      "description": "Liveness check"
+    }
+  ],
+  "payment": {
+    "protocol": "x402",
+    "summary": "Pay in USDC on Base or Solana — your client picks the rail.",
+    "note": "Facilitators are per-rail — no public facilitator settles both chains.",
+    "rails": [
+      {
+        "rail": "evm",
+        "network": "base-sepolia",
+        "mainnet": "base",
+        "asset": "USDC",
+        "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402",
+        "facilitator": "https://x402.org/facilitator",
+        "signing": "EIP-3009 transferWithAuthorization"
+      },
+      {
+        "rail": "solana",
+        "network": "solana",
+        "devnet": "solana-devnet",
+        "asset": "USDC",
+        "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW",
+        "facilitator": "https://facilitator.payai.network",
+        "signing": "SPL transferChecked"
+      }
+    ]
+  }
+}

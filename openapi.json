@@ -1,0 +1,969 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "x402-queue",
+    "version": "0.1.0",
+    "description": "Live waitlist server — pay to join a queue, receive a signed position token, auto-refund if never served. Seeing the wait is free; joining costs a $0.01 refundable hold and returns the signed token, position, ETA and a signed refund claim in the 200 body. Checking your position afterwards is free and unlimited. The paid route responds 402 with dual-rail PaymentRequirements (USDC on Base and on Solana) until an X-PAYMENT header carrying a signed payment is supplied.",
+    "contact": {
+      "name": "nirholas",
+      "email": "nichxbt@gmail.com"
+    },
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4025"
+    }
+  ],
+  "paths": {
+    "/queues": {
+      "get": {
+        "operationId": "getQueues",
+        "summary": "Every queue with its live length and wait (free)",
+        "responses": {
+          "200": {
+            "description": "Queue board",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Queues"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queues/{queueId}": {
+      "get": {
+        "operationId": "getBoard",
+        "summary": "Live board for one queue, anonymised (free)",
+        "parameters": [
+          {
+            "name": "queueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Board",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Board"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/join": {
+      "post": {
+        "operationId": "join",
+        "summary": "Join a waitlist ($0.01 refundable hold via x402)",
+        "description": "Takes a place in line and returns the signed position token, the position and ETA at issue time, and a signed refund claim — all in the 200 body. Settlement only runs when the join succeeds.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queue ticket artifact",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ticket"
+                }
+              }
+            },
+            "headers": {
+              "X-PAYMENT-RESPONSE": {
+                "description": "Base64 JSON settlement receipt: { success, transaction, network, payer }. Names the rail the payment settled on.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-PAYMENT",
+            "in": "header",
+            "required": false,
+            "description": "Base64-encoded signed x402 payment for one of the rails in accepts[]. Omit to receive the 402 challenge.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/position/{token}": {
+      "get": {
+        "operationId": "getPosition",
+        "summary": "Live position, serve status and refund status (free, pollable)",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Position",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Position"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/claim/{token}": {
+      "post": {
+        "operationId": "claimRefund",
+        "summary": "Exercise the refund claim (free, idempotent)",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Refund record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/leave/{token}": {
+      "post": {
+        "operationId": "leave",
+        "summary": "Give up your place; the hold is returned (free)",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Left the queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/call-next/{queueId}": {
+      "post": {
+        "operationId": "callNext",
+        "summary": "Operator: call the next waiting party (free)",
+        "parameters": [
+          {
+            "name": "queueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Called",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/serve/{ticketId}": {
+      "post": {
+        "operationId": "serve",
+        "summary": "Operator: mark a called party served; hold returned (free)",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Served",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/no-show/{ticketId}": {
+      "post": {
+        "operationId": "noShow",
+        "summary": "Operator: called but never appeared; hold forfeited (free)",
+        "description": "Refused with 409 GRACE_PERIOD until the queue's full graceMinutes has elapsed since the call.",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marked no-show",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/info": {
+      "get": {
+        "operationId": "info",
+        "summary": "Venue profile, hold policy, prices, payment rails (free)",
+        "responses": {
+          "200": {
+            "description": "Info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Liveness (free)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/x402": {
+      "get": {
+        "operationId": "manifest",
+        "summary": "x402 discovery manifest (free)",
+        "responses": {
+          "200": {
+            "description": "Manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid input or bad token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Unknown queue or ticket",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Queue full/closed, refund not due, already closed, or inside the grace period",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PaymentRequired": {
+        "description": "Payment required. `accepts` lists both rails (USDC on Base and USDC on Solana) — sign one and retry with X-PAYMENT.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PaymentRequirements"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "QUEUE_FULL"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Queues": {
+        "type": "object",
+        "properties": {
+          "venue": {
+            "type": "object"
+          },
+          "holdPolicy": {
+            "$ref": "#/components/schemas/HoldPolicy"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "queues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "open": {
+                  "type": "boolean"
+                },
+                "avgServeMinutes": {
+                  "type": "integer"
+                },
+                "parallelServers": {
+                  "type": "integer"
+                },
+                "maxLength": {
+                  "type": "integer"
+                },
+                "graceMinutes": {
+                  "type": "integer"
+                },
+                "waiting": {
+                  "type": "integer"
+                },
+                "beingServed": {
+                  "type": "integer"
+                },
+                "spaceLeft": {
+                  "type": "integer"
+                },
+                "estimatedWaitMinutes": {
+                  "type": "integer"
+                },
+                "acceptingJoins": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Board": {
+        "type": "object",
+        "properties": {
+          "queueId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "waiting": {
+            "type": "integer"
+          },
+          "estimatedWaitMinutes": {
+            "type": "integer"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "holder": {
+                  "type": "string",
+                  "description": "First initial only — the board is public"
+                },
+                "party": {
+                  "type": "integer"
+                },
+                "status": {
+                  "$ref": "#/components/schemas/TicketStatus"
+                },
+                "joinedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "calledAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TicketStatus": {
+        "type": "string",
+        "enum": [
+          "waiting",
+          "called",
+          "served",
+          "no-show",
+          "left",
+          "refunded"
+        ]
+      },
+      "HoldPolicy": {
+        "type": "object",
+        "properties": {
+          "joinPrice": {
+            "type": "string",
+            "example": "$0.01"
+          },
+          "refundIfNotServedMinutes": {
+            "type": "integer",
+            "example": 30
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "JoinRequest": {
+        "type": "object",
+        "required": [
+          "queue",
+          "name"
+        ],
+        "properties": {
+          "queue": {
+            "type": "string",
+            "example": "dining-room"
+          },
+          "name": {
+            "type": "string"
+          },
+          "party": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "contact": {
+            "type": "string",
+            "description": "Optional; shown to the operator only when your party is called"
+          }
+        }
+      },
+      "RefundClaim": {
+        "type": "object",
+        "description": "A signed instrument, in the buyer's hands at join time — not a promise of one.",
+        "properties": {
+          "claimId": {
+            "type": "string"
+          },
+          "ticketId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "claimableAfter": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "claimEndpoint": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string"
+          }
+        }
+      },
+      "Ticket": {
+        "type": "object",
+        "description": "The purchased artifact, returned in the 200 body of POST /join.",
+        "properties": {
+          "ticketId": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "base64url(canonical payload) + '.' + hex HMAC-SHA256 — proves when you joined and what ETA you were quoted"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "ahead": {
+            "type": "integer"
+          },
+          "party": {
+            "type": "integer"
+          },
+          "holder": {
+            "type": "string"
+          },
+          "queue": {
+            "type": "object"
+          },
+          "venue": {
+            "type": "string"
+          },
+          "eta": {
+            "type": "object",
+            "properties": {
+              "minutes": {
+                "type": "integer"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "basis": {
+                "type": "string"
+              }
+            }
+          },
+          "graceMinutes": {
+            "type": "integer"
+          },
+          "holdPolicy": {
+            "$ref": "#/components/schemas/HoldPolicy"
+          },
+          "refundClaim": {
+            "$ref": "#/components/schemas/RefundClaim"
+          },
+          "positionUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "positionEndpoint": {
+            "type": "string"
+          },
+          "leaveEndpoint": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signature": {
+            "type": "string"
+          }
+        }
+      },
+      "Position": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string"
+          },
+          "queue": {
+            "type": "object"
+          },
+          "venue": {
+            "type": "string"
+          },
+          "holder": {
+            "type": "string"
+          },
+          "party": {
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TicketStatus"
+          },
+          "position": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ahead": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "eta": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "calledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "servedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedReason": {
+            "type": "string"
+          },
+          "overdueByMinutes": {
+            "type": "integer"
+          },
+          "refund": {
+            "type": "object",
+            "properties": {
+              "issued": {
+                "type": "boolean"
+              },
+              "due": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "claimableAfter": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "holdPolicy": {
+            "$ref": "#/components/schemas/HoldPolicy"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RefundRecord": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string"
+          },
+          "queueId": {
+            "type": "string"
+          },
+          "refunded": {
+            "type": "boolean"
+          },
+          "alreadyIssued": {
+            "type": "boolean"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "wallet": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signature": {
+            "type": "string"
+          }
+        }
+      },
+      "PaymentRequirements": {
+        "type": "object",
+        "description": "x402 payment requirements returned with HTTP 402. `accepts` always carries BOTH rails — USDC on Base (EVM) and USDC on Solana. Pick one, sign it, retry with the X-PAYMENT header.",
+        "required": [
+          "x402Version",
+          "accepts"
+        ],
+        "properties": {
+          "x402Version": {
+            "type": "integer",
+            "example": 1
+          },
+          "error": {
+            "type": "string",
+            "example": "X-PAYMENT header is required"
+          },
+          "accepts": {
+            "type": "array",
+            "description": "One entry per accepted payment rail.",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRail"
+            }
+          }
+        },
+        "example": {
+          "x402Version": 1,
+          "error": "X-PAYMENT header is required",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "base-sepolia",
+              "maxAmountRequired": "10000",
+              "resource": "https://YOUR-DEPLOYMENT.example.com/join",
+              "description": "Join a live waitlist with a refundable hold. Returns a signed queue-position token, your position and ETA, and a signed refund claim that auto-matures if you are never served",
+              "mimeType": "application/json",
+              "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402",
+              "maxTimeoutSeconds": 300,
+              "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+              "extra": {
+                "name": "USDC",
+                "version": "2"
+              }
+            },
+            {
+              "scheme": "exact",
+              "network": "solana",
+              "maxAmountRequired": "10000",
+              "resource": "https://YOUR-DEPLOYMENT.example.com/join",
+              "description": "Join a live waitlist with a refundable hold. Returns a signed queue-position token, your position and ETA, and a signed refund claim that auto-matures if you are never served",
+              "mimeType": "application/json",
+              "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW",
+              "maxTimeoutSeconds": 300,
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "extra": {
+                "rpcUrl": "https://api.mainnet-beta.solana.com"
+              }
+            }
+          ]
+        }
+      },
+      "PaymentRail": {
+        "type": "object",
+        "description": "A single accepted payment rail.",
+        "required": [
+          "scheme",
+          "network",
+          "maxAmountRequired",
+          "resource",
+          "payTo",
+          "asset"
+        ],
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "enum": [
+              "exact"
+            ]
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "base-sepolia",
+              "base",
+              "solana",
+              "solana-devnet"
+            ],
+            "description": "`base*` = EVM rail (EIP-3009), `solana*` = SVM rail (SPL transferChecked)."
+          },
+          "maxAmountRequired": {
+            "type": "string",
+            "description": "Atomic USDC units (6 decimals)."
+          },
+          "resource": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "payTo": {
+            "type": "string",
+            "description": "Merchant receive address on that network."
+          },
+          "maxTimeoutSeconds": {
+            "type": "integer"
+          },
+          "asset": {
+            "type": "string",
+            "description": "USDC contract address / SPL mint."
+          },
+          "outputSchema": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "extra": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "EVM: EIP-712 domain. Solana: `rpcUrl` for building the transfer."
+          }
+        }
+      }
+    }
+  }
+}
