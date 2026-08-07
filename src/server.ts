@@ -46,6 +46,26 @@ const routes: RouteMap = {
 
 const app = express();
 app.use(express.json());
+// A malformed JSON body must not pre-empt the paywall. The x402 discovery spec
+// requires a probe to reach the 402 challenge *before* body validation rejects
+// the request, so a parse failure drops the body and falls through instead of
+// answering 400. The route handler still rejects it once payment verifies, and
+// a 4xx from the handler never settles — so a bad body is never charged for.
+app.use(
+  (
+    err: unknown,
+    req: express.Request,
+    _res: express.Response,
+    next: express.NextFunction,
+  ): void => {
+    if (err instanceof SyntaxError && "body" in err) {
+      req.body = {};
+      next();
+      return;
+    }
+    next(err);
+  },
+);
 // Solana browser checkout for public/index.html (EVM needs no server help).
 const solanaCheckout = await mountSolanaCheckout(app);
 app.use(paywall(routes, { baseUrl: process.env.PUBLIC_BASE_URL }));
