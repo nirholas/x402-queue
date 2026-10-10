@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "x402-queue"
+abstract: "Live waitlist server: pay to join a queue, receive a signed position token, auto-refund if never served"
+license: Apache-2.0
+repository-code: "https://github.com/nirholas/x402-queue"
+url: "https://three.ws"
+authors:
+  - name: three.ws
+    website: "https://three.ws"

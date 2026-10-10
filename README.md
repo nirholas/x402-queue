@@ -211,3 +211,26 @@ Questions, integration help, or a bug report: **nichxbt@gmail.com** — or open 
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=nirholas/x402-queue&type=Date)](https://www.star-history.com/#nirholas/x402-queue&Date)
+
+<!-- three.ws:growth -->
+## Support the project
+
+If x402-queue saves you time, **[star it on GitHub](https://github.com/nirholas/x402-queue)**. Stars are how other developers and AI agents find the repositories worth trusting, and they cost you one click.
+
+Know someone who would use it? [Post on X](https://twitter.com/intent/tweet?text=x402-queue%3A%20Live%20waitlist%20server%3A%20pay%20to%20join%20a%20queue%2C%20receive%20a%20signed%20position%20token%2C%20auto-refund%20if%20never&url=https%3A%2F%2Fgithub.com%2Fnirholas%2Fx402-queue) · [Share on Bluesky](https://bsky.app/intent/compose?text=x402-queue%3A%20Live%20waitlist%20server%3A%20pay%20to%20join%20a%20queue%2C%20receive%20a%20signed%20position%20token%2C%20auto-refund%20if%20never%20https%3A%2F%2Fgithub.com%2Fnirholas%2Fx402-queue) · [Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2Fnirholas%2Fx402-queue) · [Submit to Hacker News](https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgithub.com%2Fnirholas%2Fx402-queue&t=x402-queue%3A%20Live%20waitlist%20server%3A%20pay%20to%20join%20a%20queue%2C%20receive%20a%20signed%20position%20token%2C%20auto-refund%20if%20never) · [Share on Reddit](https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2Fnirholas%2Fx402-queue&title=x402-queue%3A%20Live%20waitlist%20server%3A%20pay%20to%20join%20a%20queue%2C%20receive%20a%20signed%20position%20token%2C%20auto-refund%20if%20never)
+
+## Built for AI agents too
+
+Coding agents and LLM tooling can read this repo directly: [AGENTS.md](./AGENTS.md), [llms.txt](./llms.txt), [llms-full.txt](./llms-full.txt). Point an agent at `https://github.com/nirholas/x402-queue` and it has the context it needs.
+
+## More from the same author
+
+- [All repositories by nirholas](https://github.com/nirholas/nirholas#readme): the full catalog, grouped by topic
+- [three.ws](https://three.ws): the platform for 3D AI agents with Solana wallets, a skill marketplace and x402 payments
+- Questions or ideas: [open an issue](https://github.com/nirholas/x402-queue/issues) or [start a discussion](https://github.com/nirholas/x402-queue/discussions)
+
+## Contributors
+
+[![Contributors](https://contrib.rocks/image?repo=nirholas/x402-queue)](https://github.com/nirholas/x402-queue/graphs/contributors)
+
+<!-- /three.ws:growth -->
