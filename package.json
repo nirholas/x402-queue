@@ -39,7 +39,7 @@
     "@solana/web3.js": "^1.95.0",
     "@three-ws/x402-payment-modal": "^1.2.0",
     "dotenv": "^16.4.5",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "x402": "^1.2.0",
     "x402-express": "^1.2.0"
   },
