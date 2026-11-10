@@ -1,0 +1,22 @@
+{
+  "name": "x402-queue",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Run the x402-queue waitlist server and join a queue with a refundable x402 hold, receiving a signed position token and refund claim.",
+  "plugins": [
+    {
+      "name": "x402-queue",
+      "source": "./plugins/x402-queue",
+      "description": "Run the x402-queue waitlist server and join a queue with a refundable x402 hold, receiving a signed position token and refund claim.",
+      "category": "automation",
+      "tags": [
+        "x402",
+        "queue",
+        "waitlist",
+        "refund",
+        "usdc"
+      ]
+    }
+  ]
+}
